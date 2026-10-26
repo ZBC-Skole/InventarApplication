@@ -43,7 +43,7 @@ Når du tilføjer et billede, læser Inventar det med Vision og Apples sprogmode
 | **Kategori** | Vælges blandt dine egne kategorier – og kun når genstanden er genkendt sikkert. |
 | **Noter** | Anden tekst, der står på genstanden. Farve og stand bliver ikke gættet. |
 
-Viser billedet flere genstande eller ingen tydelig genstand, bliver intet udfyldt. Felter, du selv har skrevet i, bliver aldrig overskrevet. Hvert udfyldt felt er markeret med ✨ – hold markøren over for at se hvorfor – og **Fortryd** fjerner alle forslag igen.
+Viser billedet flere genstande eller ingen tydelig genstand, bliver intet udfyldt. Felter, du selv har skrevet i, bliver aldrig overskrevet. Hvert udfyldt felt er markeret med ✨ og en kort forklaring af, hvor værdien kommer fra, og **Fortryd** fjerner alle forslag igen.
 
 <img src="docs/screenshots/detail.png" alt="Nyt udstyr med fritlagt billede i detaljepanelet" width="900" />
 
