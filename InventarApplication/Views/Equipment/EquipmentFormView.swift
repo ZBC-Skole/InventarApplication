@@ -32,10 +32,22 @@ struct EquipmentFormView: View {
     @State private var draft: EquipmentDraft
     @State private var showsValidationErrors = false
     @State private var saveError: String?
+    @State private var autofill = AutofillState.idle
+    @State private var autofillTask: Task<Void, Never>?
     @FocusState private var focusedField: Field?
 
     private enum Field {
         case name, serialNumber
+    }
+
+    /// Progress of filling the form in from the photo with Apple Intelligence.
+    private enum AutofillState: Equatable {
+        case idle
+        case running
+        /// Holds the draft from before filling, so the user can undo it.
+        case filled(previous: EquipmentDraft)
+        case nothingFound
+        case failed
     }
 
     init(mode: EquipmentFormMode, onSave: @escaping (Equipment) -> Void = { _ in }) {
@@ -51,22 +63,25 @@ struct EquipmentFormView: View {
         NavigationStack {
             Form {
                 Section {
-                    EquipmentImagePicker(draft: $draft)
+                    EquipmentImagePicker(draft: $draft, onImageImported: autofill(from:))
                         .listRowInsets(EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12))
+                    if autofill != .idle {
+                        autofillStatus
+                    }
                 }
 
                 Section {
                     validatedField(
                         "Navn",
                         text: $draft.name,
-                        prompt: "F.eks. MacBook Pro 14\"",
+                        prompt: autofill == .running ? "Udfylder…" : "F.eks. MacBook Pro 14\"",
                         error: .emptyName,
                         field: .name
                     )
                     validatedField(
                         "Serienummer",
                         text: $draft.serialNumber,
-                        prompt: "F.eks. C02XK1JHMD6T",
+                        prompt: autofill == .running ? "Udfylder…" : "F.eks. C02XK1JHMD6T",
                         error: .emptySerialNumber,
                         field: .serialNumber,
                         isMonospaced: true
@@ -126,8 +141,119 @@ struct EquipmentFormView: View {
                 draft.category = categories.first { $0.name == categoryName }
             }
             focusedField = .name
+            EquipmentAutofill.prewarm()
+        }
+        .onChange(of: draft.photoData == nil) { _, hasNoPhoto in
+            if hasNoPhoto { cancelAutofill() }
+        }
+        .onDisappear(perform: cancelAutofill)
+    }
+
+    // MARK: - Autofill
+
+    @ViewBuilder
+    private var autofillStatus: some View {
+        HStack(spacing: 8) {
+            switch autofill {
+            case .idle:
+                EmptyView()
+            case .running:
+                ProgressView()
+                    .controlSize(.small)
+                Text("Apple Intelligence udfylder formularen ud fra billedet…")
+                    .foregroundStyle(.secondary)
+            case .filled(let previous):
+                Label {
+                    Text("Udfyldt ud fra billedet. Tjek felterne, før du gemmer.")
+                        .foregroundStyle(.secondary)
+                } icon: {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(.intelligenceGradient)
+                }
+                Spacer()
+                Button("Fortryd") { undoAutofill(restoring: previous) }
+                    .buttonStyle(.glass)
+            case .nothingFound:
+                Label("Der blev ikke genkendt noget at udfylde.", systemImage: "sparkles")
+                    .foregroundStyle(.secondary)
+            case .failed:
+                Label("Formularen kunne ikke udfyldes automatisk.", systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .font(.callout)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .transition(.opacity)
+    }
+
+    /// Asks the on-device model for suggestions and fills in the fields that are still empty.
+    private func autofill(from photoData: Data) {
+        autofillTask?.cancel()
+        guard EquipmentAutofill.isAvailable else { return }
+
+        withAnimation { autofill = .running }
+        let categoryNames = categories.map(\.name)
+        autofillTask = Task {
+            do {
+                let suggestion = try await EquipmentAutofill.suggest(
+                    from: photoData,
+                    categoryNames: categoryNames
+                )
+                guard !Task.isCancelled, draft.photoData == photoData else { return }
+                withAnimation { apply(suggestion) }
+            } catch {
+                guard !Task.isCancelled else { return }
+                withAnimation { autofill = .failed }
+            }
         }
     }
+
+    private func apply(_ suggestion: EquipmentSuggestion) {
+        let previous = draft
+        var didFill = false
+
+        if draft.name.trimmingCharacters(in: .whitespaces).isEmpty, let name = suggestion.name {
+            draft.name = name
+            didFill = true
+        }
+        if draft.serialNumber.trimmingCharacters(in: .whitespaces).isEmpty,
+            let serialNumber = suggestion.serialNumber
+        {
+            draft.serialNumber = serialNumber
+            didFill = true
+        }
+        if draft.category == nil,
+            let categoryName = suggestion.categoryName,
+            let category = categories.first(where: { $0.name == categoryName })
+        {
+            draft.category = category
+            didFill = true
+        }
+        if draft.notes.trimmingCharacters(in: .whitespaces).isEmpty, let notes = suggestion.notes {
+            draft.notes = notes
+            didFill = true
+        }
+
+        autofill = didFill ? .filled(previous: previous) : .nothingFound
+    }
+
+    private func undoAutofill(restoring previous: EquipmentDraft) {
+        withAnimation {
+            draft.name = previous.name
+            draft.serialNumber = previous.serialNumber
+            draft.category = previous.category
+            draft.notes = previous.notes
+            autofill = .idle
+        }
+    }
+
+    private func cancelAutofill() {
+        autofillTask?.cancel()
+        autofillTask = nil
+        autofill = .idle
+    }
+
+    // MARK: - Fields
 
     private func validatedField(
         _ title: LocalizedStringKey,
@@ -138,9 +264,16 @@ struct EquipmentFormView: View {
         isMonospaced: Bool = false
     ) -> some View {
         VStack(alignment: .trailing, spacing: 4) {
-            TextField(title, text: text, prompt: Text(prompt))
-                .focused($focusedField, equals: field)
-                .monospaced(isMonospaced)
+            // A separate label keeps it in the default font when the field is monospaced.
+            LabeledContent {
+                TextField(title, text: text, prompt: Text(prompt))
+                    .labelsHidden()
+                    .multilineTextAlignment(.trailing)
+                    .monospaced(isMonospaced)
+                    .focused($focusedField, equals: field)
+            } label: {
+                Text(title)
+            }
             if showsValidationErrors && draft.validationErrors.contains(error) {
                 Label {
                     Text(error.message)

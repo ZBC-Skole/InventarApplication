@@ -13,6 +13,8 @@ import UniformTypeIdentifiers
 /// automatically with on-device Vision.
 struct EquipmentImagePicker: View {
     @Binding var draft: EquipmentDraft
+    /// Called with the stored photo once a new image has been imported and processed.
+    var onImageImported: (Data) -> Void = { _ in }
 
     @State private var isProcessing = false
     @State private var isImportingFile = false
@@ -183,7 +185,9 @@ struct EquipmentImagePicker: View {
         defer { isProcessing = false }
 
         do {
-            draft.setImage(try await ImageProcessor.process(data))
+            let image = try await ImageProcessor.process(data)
+            draft.setImage(image)
+            onImageImported(image.photo)
         } catch {
             errorMessage = "Billedet kunne ikke indlæses."
         }
