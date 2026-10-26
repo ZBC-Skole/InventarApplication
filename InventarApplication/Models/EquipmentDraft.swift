@@ -17,6 +17,8 @@ struct EquipmentDraft: Equatable {
     var notes = ""
     var photoData: Data?
     var cutoutData: Data?
+    var prefersCutout = true
+    var thumbnailData: Data?
 
     enum ValidationError: Error, Equatable {
         case emptyName
@@ -40,6 +42,27 @@ struct EquipmentDraft: Equatable {
         notes = equipment.notes
         photoData = equipment.photoData
         cutoutData = equipment.cutoutData
+        prefersCutout = equipment.prefersCutout
+        thumbnailData = equipment.thumbnailData
+    }
+
+    var displayImageData: Data? {
+        prefersCutout ? (cutoutData ?? photoData) : photoData
+    }
+
+    /// Replaces the image with a freshly imported and processed one.
+    mutating func setImage(_ image: ProcessedImage) {
+        photoData = image.photo
+        cutoutData = image.cutout
+        prefersCutout = image.cutout != nil
+        thumbnailData = image.thumbnail
+    }
+
+    mutating func removeImage() {
+        photoData = nil
+        cutoutData = nil
+        prefersCutout = true
+        thumbnailData = nil
     }
 
     var validationErrors: [ValidationError] {
@@ -61,7 +84,9 @@ struct EquipmentDraft: Equatable {
             status: status,
             notes: notes,
             photoData: photoData,
-            cutoutData: cutoutData
+            cutoutData: cutoutData,
+            prefersCutout: prefersCutout,
+            thumbnailData: thumbnailData
         )
     }
 
@@ -76,10 +101,16 @@ struct EquipmentDraft: Equatable {
         equipment.notes = notes
         equipment.photoData = photoData
         equipment.cutoutData = cutoutData
+        equipment.prefersCutout = prefersCutout
+        equipment.thumbnailData = thumbnailData
         equipment.updatedAt = .now
         return true
     }
 
-    private var trimmedName: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
-    private var trimmedSerialNumber: String { serialNumber.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var trimmedName: String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    private var trimmedSerialNumber: String {
+        serialNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }

@@ -25,14 +25,20 @@ final class Equipment {
     @Attribute(.externalStorage) var photoData: Data?
     /// The subject cut out from `photoData` (transparent PNG), when one could be found.
     @Attribute(.externalStorage) var cutoutData: Data?
+    /// Whether to show `cutoutData` instead of `photoData`. The user can switch back to the original.
+    var prefersCutout: Bool
+    /// A small PNG of the displayed image, used in the table so rows don't decode full-size photos.
+    var thumbnailData: Data?
 
     var status: EquipmentStatus {
         get { EquipmentStatus(rawValue: statusRawValue) ?? .available }
         set { statusRawValue = newValue.rawValue }
     }
 
-    /// The image to show in the UI: the cutout if available, otherwise the original photo.
-    var displayImageData: Data? { cutoutData ?? photoData }
+    /// The image to show in the UI: the cutout if available and preferred, otherwise the original photo.
+    var displayImageData: Data? {
+        prefersCutout ? (cutoutData ?? photoData) : photoData
+    }
 
     init(
         name: String,
@@ -42,6 +48,8 @@ final class Equipment {
         notes: String = "",
         photoData: Data? = nil,
         cutoutData: Data? = nil,
+        prefersCutout: Bool = true,
+        thumbnailData: Data? = nil,
         createdAt: Date = .now
     ) {
         self.name = name
@@ -51,6 +59,8 @@ final class Equipment {
         self.notes = notes
         self.photoData = photoData
         self.cutoutData = cutoutData
+        self.prefersCutout = prefersCutout
+        self.thumbnailData = thumbnailData
         self.createdAt = createdAt
         self.updatedAt = createdAt
     }
@@ -70,7 +80,9 @@ extension Equipment {
         categoryName: String? = nil,
         status: EquipmentStatus? = nil
     ) -> Predicate<Equipment> {
-        let searchText = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let searchText = searchText.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
         let filterByCategory = categoryName != nil
         let categoryName = categoryName ?? ""
         let filterByStatus = status != nil
@@ -80,12 +92,12 @@ extension Equipment {
             (searchText.isEmpty
                 || item.name.localizedStandardContains(searchText)
                 || item.serialNumber.localizedStandardContains(searchText))
-            && (!filterByCategory || item.category?.name == categoryName)
-            && (!filterByStatus || item.statusRawValue == statusRawValue)
+                && (!filterByCategory || item.category?.name == categoryName)
+                && (!filterByStatus || item.statusRawValue == statusRawValue)
         }
     }
 
     static let defaultSort: [SortDescriptor<Equipment>] = [
-        SortDescriptor(\.name, comparator: .localizedStandard),
+        SortDescriptor(\.name, comparator: .localizedStandard)
     ]
 }

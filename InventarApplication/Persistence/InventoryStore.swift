@@ -14,7 +14,7 @@ enum InventoryStore {
             let container = try ModelContainer(
                 for: Schema(versionedSchema: InventorySchemaV1.self),
                 migrationPlan: InventoryMigrationPlan.self,
-                configurations: ModelConfiguration("Inventory")
+                configurations: ModelConfiguration("Inventar")
             )
             try seedDefaultCategoriesIfNeeded(in: container.mainContext)
             return container
@@ -40,9 +40,15 @@ enum InventoryStore {
 
     /// Inserts `EquipmentCategory.defaults` the first time the store is opened.
     static func seedDefaultCategoriesIfNeeded(in context: ModelContext) throws {
-        guard try context.fetchCount(FetchDescriptor<EquipmentCategory>()) == 0 else { return }
+        guard try context.fetchCount(FetchDescriptor<EquipmentCategory>()) == 0
+        else { return }
         for category in EquipmentCategory.defaults {
-            context.insert(EquipmentCategory(name: category.name, symbolName: category.symbolName))
+            context.insert(
+                EquipmentCategory(
+                    name: category.name,
+                    symbolName: category.symbolName
+                )
+            )
         }
         try context.save()
     }
@@ -54,14 +60,51 @@ enum InventoryStore {
         }
 
         let samples: [Equipment] = [
-            Equipment(name: "MacBook Pro 14\"", serialNumber: "C02XK1JHMD6T", category: category("Bærbare"), status: .inUse),
-            Equipment(name: "MacBook Air 13\"", serialNumber: "FVFG3LL7Q6L4", category: category("Bærbare")),
-            Equipment(name: "Studio Display", serialNumber: "H4TFK0A2Q6X1", category: category("Skærme")),
-            Equipment(name: "Magic Keyboard", serialNumber: "F0T1302ADJ8M", category: category("Tilbehør")),
-            Equipment(name: "Sony A7 IV", serialNumber: "SN-4471902", category: category("Kameraer"), status: .inRepair, notes: "Udløserknappen sidder fast."),
-            Equipment(name: "AirPods Max", serialNumber: "GX7DL2Q1P73R", category: category("Lyd"), status: .inUse),
-            Equipment(name: "UniFi Dream Machine", serialNumber: "UDM-7A1B2C", category: category("Netværk")),
-            Equipment(name: "Gammel Dell-skærm", serialNumber: "CN-0F525M-74261", category: category("Skærme"), status: .retired),
+            Equipment(
+                name: "MacBook Pro 14\"",
+                serialNumber: "C02XK1JHMD6T",
+                category: category("Bærbare"),
+                status: .inUse
+            ),
+            Equipment(
+                name: "MacBook Air 13\"",
+                serialNumber: "FVFG3LL7Q6L4",
+                category: category("Bærbare")
+            ),
+            Equipment(
+                name: "Studio Display",
+                serialNumber: "H4TFK0A2Q6X1",
+                category: category("Skærme")
+            ),
+            Equipment(
+                name: "Magic Keyboard",
+                serialNumber: "F0T1302ADJ8M",
+                category: category("Tilbehør")
+            ),
+            Equipment(
+                name: "Sony A7 IV",
+                serialNumber: "SN-4471902",
+                category: category("Kameraer"),
+                status: .inRepair,
+                notes: "Udløserknappen sidder fast."
+            ),
+            Equipment(
+                name: "AirPods Max",
+                serialNumber: "GX7DL2Q1P73R",
+                category: category("Lyd"),
+                status: .inUse
+            ),
+            Equipment(
+                name: "UniFi Dream Machine",
+                serialNumber: "UDM-7A1B2C",
+                category: category("Netværk")
+            ),
+            Equipment(
+                name: "Gammel Dell-skærm",
+                serialNumber: "CN-0F525M-74261",
+                category: category("Skærme"),
+                status: .retired
+            ),
         ]
         samples.forEach(context.insert)
         try context.save()

@@ -20,7 +20,11 @@ final class EquipmentCategory {
     @Relationship(deleteRule: .nullify, inverse: \Equipment.category)
     var equipment: [Equipment] = []
 
-    init(name: String, symbolName: String = "shippingbox.fill", createdAt: Date = .now) {
+    init(
+        name: String,
+        symbolName: String = "shippingbox.fill",
+        createdAt: Date = .now
+    ) {
         self.name = name
         self.symbolName = symbolName
         self.createdAt = createdAt

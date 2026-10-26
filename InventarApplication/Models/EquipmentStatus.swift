@@ -8,7 +8,9 @@ import Foundation
 /// The lifecycle state of a piece of equipment.
 ///
 /// Stored on `Equipment` as its raw value so it can be used in `#Predicate` filters.
-nonisolated enum EquipmentStatus: String, Codable, CaseIterable, Identifiable, Sendable {
+nonisolated enum EquipmentStatus: String, Codable, CaseIterable, Identifiable,
+    Sendable
+{
     case available
     case inUse
     case inRepair
