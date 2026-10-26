@@ -92,19 +92,7 @@ struct EquipmentFormView: View {
                 }
 
                 Section {
-                    Picker(selection: $draft.category) {
-                        Text("Ingen").tag(EquipmentCategory?.none)
-                        Divider()
-                        ForEach(categories) { category in
-                            Label(category.name, systemImage: category.symbolName)
-                                .tag(Optional(category))
-                        }
-                    } label: {
-                        fieldLabel(
-                            "Kategori",
-                            autofillSource: autofillSource(\.categoryName, matches: draft.category?.name ?? "")
-                        )
-                    }
+                    categoryPicker
                     Picker("Status", selection: $draft.status) {
                         ForEach(EquipmentStatus.allCases) { status in
                             Label {
@@ -118,9 +106,12 @@ struct EquipmentFormView: View {
                 }
 
                 Section {
-                    TextField("Noter", text: $draft.notes, prompt: Text("Valgfrit"), axis: .vertical)
-                        .lineLimit(3...8)
-                        .labelsHidden()
+                    VStack(alignment: .leading, spacing: 6) {
+                        TextField("Noter", text: $draft.notes, prompt: Text("Valgfrit"), axis: .vertical)
+                            .lineLimit(3...8)
+                            .labelsHidden()
+                        autofillCaption(autofillSource(\.notes, matches: draft.notes))
+                    }
                 } header: {
                     fieldLabel("Noter", autofillSource: autofillSource(\.notes, matches: draft.notes))
                 }
@@ -212,7 +203,7 @@ struct EquipmentFormView: View {
         let count = [applied.name, applied.serialNumber, applied.categoryName, applied.notes]
             .compactMap(\.self).count
         let fields = count == 1 ? "1 felt" : "\(count) felter"
-        return "\(fields) udfyldt ud fra billedet. Hold markøren over ✨ for at se hvorfor."
+        return "\(fields) udfyldt ud fra billedet. Tjek dem, før du gemmer."
     }
 
     /// Why a field was filled in, as long as the user hasn't changed it since.
@@ -321,6 +312,7 @@ struct EquipmentFormView: View {
             } label: {
                 fieldLabel(title, autofillSource: autofillSource)
             }
+            autofillCaption(autofillSource)
             if showsValidationErrors && draft.validationErrors.contains(error) {
                 Label {
                     Text(error.message)
@@ -335,20 +327,54 @@ struct EquipmentFormView: View {
         .animation(.smooth, value: draft.validationErrors)
     }
 
+    private var categoryPicker: some View {
+        let source = autofillSource(\.categoryName, matches: draft.category?.name ?? "")
+        return VStack(alignment: .trailing, spacing: 4) {
+            LabeledContent {
+                Picker("Kategori", selection: $draft.category) {
+                    Text("Ingen").tag(EquipmentCategory?.none)
+                    Divider()
+                    ForEach(categories) { category in
+                        Label(category.name, systemImage: category.symbolName)
+                            .tag(Optional(category))
+                    }
+                }
+                .labelsHidden()
+                .fixedSize()
+            } label: {
+                fieldLabel("Kategori", autofillSource: source)
+            }
+            autofillCaption(source)
+        }
+    }
+
     /// A field title, marked with ✨ when its value came from the photo.
     private func fieldLabel(_ title: LocalizedStringKey, autofillSource: String?) -> some View {
         HStack(spacing: 4) {
             Text(title)
-            if let autofillSource {
+            if autofillSource != nil {
                 Image(systemName: "sparkles")
                     .font(.caption)
                     .foregroundStyle(.intelligenceGradient)
-                    .help(autofillSource)
-                    .accessibilityLabel("Udfyldt ud fra billedet: \(autofillSource)")
+                    .accessibilityHidden(true)
                     .transition(.scale.combined(with: .opacity))
             }
         }
         .animation(.smooth, value: autofillSource)
+    }
+
+    /// Says where an autofilled value came from, shown right under the field.
+    /// Disappears once the user changes the value.
+    @ViewBuilder
+    private func autofillCaption(_ source: String?) -> some View {
+        if let source {
+            Text(source)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.trailing)
+                .accessibilityLabel("Udfyldt ud fra billedet. \(source)")
+                .transition(.opacity)
+        }
     }
 
     private var isCreating: Bool {
