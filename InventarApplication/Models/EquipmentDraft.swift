@@ -24,8 +24,8 @@ struct EquipmentDraft: Equatable {
 
         var message: LocalizedStringResource {
             switch self {
-            case .emptyName: "Name must not be empty."
-            case .emptySerialNumber: "Serial number must not be empty."
+            case .emptyName: "Navn må ikke være tomt."
+            case .emptySerialNumber: "Serienummer må ikke være tomt."
             }
         }
     }

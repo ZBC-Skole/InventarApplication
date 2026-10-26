@@ -6,7 +6,7 @@
 import Foundation
 import SwiftData
 
-/// A user-editable grouping of equipment, e.g. "Laptops" or "Cameras".
+/// A user-editable grouping of equipment, e.g. "Bærbare" or "Kameraer".
 @Model
 final class EquipmentCategory {
     #Unique<EquipmentCategory>([\.name])
@@ -30,13 +30,13 @@ final class EquipmentCategory {
 extension EquipmentCategory {
     /// Categories created on first launch so the app is usable straight away.
     static let defaults: [(name: String, symbolName: String)] = [
-        ("Laptops", "laptopcomputer"),
-        ("Monitors", "display"),
-        ("Peripherals", "keyboard.fill"),
-        ("Cameras", "camera.fill"),
-        ("Audio", "headphones"),
-        ("Networking", "wifi.router.fill"),
-        ("Tools", "hammer.fill"),
-        ("Other", "shippingbox.fill"),
+        ("Bærbare", "laptopcomputer"),
+        ("Skærme", "display"),
+        ("Tilbehør", "keyboard.fill"),
+        ("Kameraer", "camera.fill"),
+        ("Lyd", "headphones"),
+        ("Netværk", "wifi.router.fill"),
+        ("Værktøj", "hammer.fill"),
+        ("Andet", "shippingbox.fill"),
     ]
 }

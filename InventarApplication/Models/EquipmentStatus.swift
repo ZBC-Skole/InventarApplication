@@ -18,10 +18,10 @@ nonisolated enum EquipmentStatus: String, Codable, CaseIterable, Identifiable, S
 
     var title: LocalizedStringResource {
         switch self {
-        case .available: "Available"
-        case .inUse: "In Use"
-        case .inRepair: "In Repair"
-        case .retired: "Retired"
+        case .available: "Tilgængelig"
+        case .inUse: "Udlånt"
+        case .inRepair: "Til reparation"
+        case .retired: "Kasseret"
         }
     }
 

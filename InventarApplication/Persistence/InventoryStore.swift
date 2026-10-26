@@ -54,14 +54,14 @@ enum InventoryStore {
         }
 
         let samples: [Equipment] = [
-            Equipment(name: "MacBook Pro 14\"", serialNumber: "C02XK1JHMD6T", category: category("Laptops"), status: .inUse),
-            Equipment(name: "MacBook Air 13\"", serialNumber: "FVFG3LL7Q6L4", category: category("Laptops")),
-            Equipment(name: "Studio Display", serialNumber: "H4TFK0A2Q6X1", category: category("Monitors")),
-            Equipment(name: "Magic Keyboard", serialNumber: "F0T1302ADJ8M", category: category("Peripherals")),
-            Equipment(name: "Sony A7 IV", serialNumber: "SN-4471902", category: category("Cameras"), status: .inRepair, notes: "Shutter button sticks."),
-            Equipment(name: "AirPods Max", serialNumber: "GX7DL2Q1P73R", category: category("Audio"), status: .inUse),
-            Equipment(name: "UniFi Dream Machine", serialNumber: "UDM-7A1B2C", category: category("Networking")),
-            Equipment(name: "Old Dell Monitor", serialNumber: "CN-0F525M-74261", category: category("Monitors"), status: .retired),
+            Equipment(name: "MacBook Pro 14\"", serialNumber: "C02XK1JHMD6T", category: category("Bærbare"), status: .inUse),
+            Equipment(name: "MacBook Air 13\"", serialNumber: "FVFG3LL7Q6L4", category: category("Bærbare")),
+            Equipment(name: "Studio Display", serialNumber: "H4TFK0A2Q6X1", category: category("Skærme")),
+            Equipment(name: "Magic Keyboard", serialNumber: "F0T1302ADJ8M", category: category("Tilbehør")),
+            Equipment(name: "Sony A7 IV", serialNumber: "SN-4471902", category: category("Kameraer"), status: .inRepair, notes: "Udløserknappen sidder fast."),
+            Equipment(name: "AirPods Max", serialNumber: "GX7DL2Q1P73R", category: category("Lyd"), status: .inUse),
+            Equipment(name: "UniFi Dream Machine", serialNumber: "UDM-7A1B2C", category: category("Netværk")),
+            Equipment(name: "Gammel Dell-skærm", serialNumber: "CN-0F525M-74261", category: category("Skærme"), status: .retired),
         ]
         samples.forEach(context.insert)
         try context.save()
